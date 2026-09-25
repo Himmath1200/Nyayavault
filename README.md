@@ -255,3 +255,5 @@ The suite specifically covers: unauthorized users cannot access restricted (SEAL
 ## 15. Legal & Ethical Notes
 
 All data in this repository is synthetic. No real Aadhaar numbers, phone numbers, addresses, FIRs, witnesses, or government records are used anywhere, including in seed data. The AI layer summarizes, classifies, extracts entities, and flags potential inconsistencies for human review — it never determines guilt, innocence, or any legal outcome, and every AI-influenced surface in the product says so explicitly. Verification certificates state plainly that they are a technical record, not a legal determination, and NyayaVault does not claim to be independently legally admissible.
+#   N y a y a v a u l t  
+ 
