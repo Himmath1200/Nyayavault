@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 
-from app.api import access, ai, audit, auth, cases, dashboard, documents, evidence, notifications, security, users, verify
+from app.api import access, ai, audit, auth, cases, dashboard, documents, evidence, notifications, search, security, users, verify
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
+api_router.include_router(search.router)
 api_router.include_router(cases.router)
 api_router.include_router(documents.router)
 api_router.include_router(evidence.router)

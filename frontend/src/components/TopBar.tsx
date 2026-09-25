@@ -1,14 +1,29 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ShieldCheck, LogOut, ChevronDown } from "lucide-react";
+import { Search, ShieldCheck, LogOut, ChevronDown, Folder, FileText, Fingerprint, UserRound } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { UserAvatar } from "@/components/UserAvatar";
 import { roleLabel } from "@/utils/format";
-import { casesService } from "@/services/cases";
+import { searchService } from "@/services/search";
 import { NotificationBell } from "@/components/NotificationPanel";
 import { can, PERMISSIONS } from "@/utils/rbac";
 import { securityService } from "@/services/security";
+import { SearchResult } from "@/types";
+
+const RESULT_ICON: Record<SearchResult["type"], typeof Folder> = {
+  case: Folder,
+  document: FileText,
+  evidence: Fingerprint,
+  user: UserRound,
+};
+
+const RESULT_LABEL: Record<SearchResult["type"], string> = {
+  case: "Case",
+  document: "Document",
+  evidence: "Evidence",
+  user: "User",
+};
 
 export function TopBar() {
   const { user, logout } = useAuth();
@@ -18,10 +33,10 @@ export function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const { data: results } = useQuery({
+  const { data: results, isFetching: searching } = useQuery({
     queryKey: ["global-search", query],
-    queryFn: () => casesService.list({ search: query }),
-    enabled: query.length > 1,
+    queryFn: () => searchService.global(query),
+    enabled: query.trim().length > 1,
   });
 
   const { data: alerts } = useQuery({
@@ -55,25 +70,34 @@ export function TopBar() {
           placeholder="Search cases, evidence, documents, officers..."
           className="w-full rounded-md border border-base-border bg-base-bg py-2 pl-9 pr-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent"
         />
-        {showResults && query.length > 1 && (
+        {showResults && query.trim().length > 1 && (
           <div className="absolute left-0 right-0 top-11 z-40 max-h-80 overflow-y-auto panel">
-            {results && results.length > 0 ? (
-              results.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => {
-                    navigate(`/cases/${c.id}`);
-                    setShowResults(false);
-                    setQuery("");
-                  }}
-                  className="flex w-full flex-col items-start gap-0.5 border-b border-base-border px-3 py-2 text-left last:border-0 hover:bg-base-hover"
-                >
-                  <span className="text-sm text-text-primary">{c.title}</span>
-                  <span className="mono text-[11px] text-text-muted">{c.case_number}</span>
-                </button>
-              ))
+            {searching && !results ? (
+              <p className="px-3 py-3 text-xs text-text-muted">Searching...</p>
+            ) : results && results.length > 0 ? (
+              results.map((r) => {
+                const Icon = RESULT_ICON[r.type];
+                return (
+                  <button
+                    key={`${r.type}-${r.id}`}
+                    onClick={() => {
+                      navigate(r.type === "user" ? "/users" : `/cases/${r.case_id ?? r.id}`);
+                      setShowResults(false);
+                      setQuery("");
+                    }}
+                    className="flex w-full items-center gap-2.5 border-b border-base-border px-3 py-2 text-left last:border-0 hover:bg-base-hover"
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-text-primary">{r.title}</p>
+                      <p className="mono truncate text-[11px] text-text-muted">{r.subtitle}</p>
+                    </div>
+                    <span className="label-caps shrink-0 text-text-muted">{RESULT_LABEL[r.type]}</span>
+                  </button>
+                );
+              })
             ) : (
-              <p className="px-3 py-3 text-xs text-text-muted">No matching cases found.</p>
+              <p className="px-3 py-3 text-xs text-text-muted">No matching cases, documents, evidence, or officers found.</p>
             )}
           </div>
         )}

@@ -10,6 +10,14 @@ export type UserRole =
 export type CaseStatus = "ACTIVE" | "CLOSED" | "SUSPENDED";
 export type CasePriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
+export interface SearchResult {
+  type: "case" | "document" | "evidence" | "user";
+  id: string;
+  title: string;
+  subtitle: string;
+  case_id?: string | null;
+}
+
 export type DocumentType =
   | "FIR"
   | "POLICE_REPORT"
