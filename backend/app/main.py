@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -52,10 +52,20 @@ async def security_headers_middleware(request: Request, call_next):
     return response
 
 
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
-    return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"detail": "An internal error occurred."})
+# A catch-all registered via @app.exception_handler(Exception) runs at the OUTERMOST layer of
+# the app (Starlette's ServerErrorMiddleware) — outside every middleware added via
+# add_middleware()/@app.middleware("http"), CORSMiddleware included. That means any unhandled
+# error would ship with no CORS headers, and browsers silently discard such a response before
+# JS ever sees it — surfacing as a generic "Network Error" no matter what actually failed. A
+# plain middleware wrapping call_next() in try/except runs *inside* CORSMiddleware instead, so
+# error responses get the same CORS/security headers as every other response.
+@app.middleware("http")
+async def unhandled_exception_middleware(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception:
+        logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"detail": "An internal error occurred."})
 
 
 app.include_router(api_router)
