@@ -1,0 +1,32 @@
+# Python
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+backend/.pytest_cache/
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/*.db
+
+# Environment
+backend/.env
+frontend/.env
+.env
+.env.local
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+# Editors / OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+frontend/vite_run.log
+backend/uvicorn_run.log
+*.log
